@@ -25,6 +25,13 @@ Read API docs offline, CLI, supports DevDocs.io compatible JSON files
 
 In the future, docoto could be included as plugin to a text editor, such as micro. 
 
+# Install
+
+	$ chmod a+x docote
+	$ ./docote
+
+Docote does not include any dictionaries, so feel free to add your own. 
+
 # Limitations
 
 - Not much tested or used in the first release
