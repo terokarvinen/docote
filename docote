@@ -1,0 +1,150 @@
+#!/usr/bin/python3
+"""Search offline documentation, in DevDocs.io:s formats.
+
+Search documentation offline. For example:
+
+	'docote os.path'
+
+or
+
+	'docote python os.path'
+
+Search is case insensitive AND search. 
+
+Dictionary format is a JSON file, with keyword as key, and the explantion as value:
+
+	{"os.path": "<h1>os.path - Common pathname manip..."
+
+For search, the name of the dictionary is added to keyword, e.g. "python3.6 os.path". 
+
+https://github.com/terokarvinen/docote
+"""
+__version__ = "2021-10-31"
+__copyright__ = "Copyright 2021 Tero Karvinen http://TeroKarvinen.com"
+
+# flake8: noqa: E110, N208
+
+import logging
+from logging import debug, info, warning, INFO, WARNING, DEBUG
+import argparse
+from glob import glob
+import json
+import sys
+from os.path import basename, expanduser
+from bs4 import BeautifulSoup
+
+
+def parseArgs():
+	parser = argparse.ArgumentParser(fromfile_prefix_chars="@",	description=__doc__, epilog=__copyright__)
+	parser.add_argument("-v", "--verbose", action="store_const", dest="log_level", const=INFO, default=WARNING)
+	parser.add_argument("-d", "--debug", action="store_const", dest="log_level", const=DEBUG)
+	parser.add_argument("-n", "--max-hits", default=1, type=int)
+	parser.add_argument("-a", "--all", action="store_const", dest="max_hits", const=999, \
+		help="show full text for all hits, even when there are more than one")
+	parser.add_argument("-k", "--keys-only", action="store_true")
+	parser.add_argument("--status", action="store_true", help="show information about dictionaries and search paths")
+	parser.add_argument("--dict-dir", 
+		help="directory containing dictionaries in DevDocs.io compatible JSON format. Can be a symlink. ",
+		default=expanduser("~/docote-dicts"))
+	# parser.add_argument("-i", "--interactive", action="store_true", help="UNIMPLEMENTED Keep dictionaries in memory, allow user to do multiple searches interactively")
+	parser.add_argument("keyword", nargs="*", help="keywords, case insensitive, AND search")
+
+	return parser.parse_args()
+
+def html2txt(html): # adapted from html2txt, (c) 2021 Tero Karvinen
+	soup = BeautifulSoup(html, "html5lib")
+	text = soup.get_text()
+	return text
+
+def allKeywordsInString(keywords, haystack):
+	"Return true if all keywords are found in string haystack, case insensitive"
+	for keyword in keywords:
+		if not keyword.lower() in haystack.lower():
+			return False
+	return True		
+
+def main():
+	global args, dictionary
+	### Prepare ###
+	args=parseArgs()
+
+	logformat="%(message)s"
+	if args.log_level <= DEBUG:
+		logformat="%(funcName)s():%(lineno)i: %(message)s %(levelname)s"
+
+	logging.basicConfig(level=args.log_level, format=logformat)
+	debug(f"Arguments: {args}")
+
+	### Read the files  ###
+	# Files will be in OS disk cache (RAM) after the first use
+	globPath = args.dict_dir+"/**/*.json"
+	debug("globPath: "+ globPath)
+	dictionary = {} # dictname+keyword -> body
+	dictFiles = glob(globPath, recursive=True)
+	for dictFile in dictFiles:
+		dictName = basename(dictFile)
+		dictName = dictName.replace(".json", "")
+		debug(f"Reading JSON dictionary '{dictName}' from '{dictFile}'...")
+		with open(dictFile, 'r') as f:
+			for k, v in json.load(f).items():
+				fullkey = f"{dictName} {k}"
+				dictionary.update({fullkey: v})
+		debug(f"Combined dictionary now has {len(dictionary)} entries.")
+
+	### Status - information about dictionaries and search paths ###
+	if not args.keyword or args.status:
+		print(f"Recursively looking for dictionaries in --dict-dir:")
+		print(f"	'{ args.dict_dir}'.")
+		print("Found dictionaries:")
+		for dictFile in dictFiles:
+			print(f"	{ dictFile }")
+		print(f"Total words found in all dictionaries:")
+		print(f"	{len(dictionary)}")
+		print("Copyright 2021 Tero Karvinen http://TeroKarvinen.com")
+		print("Use --help for help.")
+		print("Usage: docote KEYWORD")
+		exit(0)
+
+	### Find hits ###
+	hits = [] # keys only
+	for k in dictionary:
+		if not allKeywordsInString(args.keyword, k):
+			continue
+		debug(f"Hit '{ k }'")
+		hits.append(k)
+
+	### Sort best hit first ###
+	hits.sort(key=len)
+
+	if not hits:
+		warning(f"No hits")
+		exit(1)
+	
+	if args.keys_only:
+		print("\n".join(hits))
+		info("User requested --keys-only mode, exiting...")
+		sys.exit(0)
+
+	### Summary ###
+	info(f"{len(hits)} hits, showing max {args.max_hits}: { ' '.join(hits)}")
+
+	### Show full text (e.g. "SQL SELECT..." ###
+
+	for hit in hits[:args.max_hits]:
+		text = html2txt(dictionary[hit])
+		print(f"### {hit} ###")
+		print(f"{text}")
+		print()
+
+	### List all hits ###
+	print(f"All { len(hits)} hits:")
+	for hit in hits:
+		text = html2txt(dictionary[hit])
+		text = text.replace('\n', '')
+		text = text.replace('\t', '')
+		s = f"{ hit} - '{ text[:120]} "
+		print(f"{s[:79]}'")
+
+if __name__ == "__main__":
+	main()
+
