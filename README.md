@@ -10,6 +10,7 @@ Read API docs offline, CLI, supports DevDocs.io compatible JSON files
 	SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]
 	    [ * | expression [ [ AS ] output_name ] [, ...] ]
 	    [ FROM from_item [, ...] ]
+	...
 
 # Features
 
