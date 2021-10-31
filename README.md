@@ -30,6 +30,8 @@ In the future, docoto could be included as plugin to a text editor, such as micr
 	$ chmod a+x docote
 	$ ./docote
 
+# Testing
+
 Docote does not include any dictionaries, so feel free to add your own. To test it with the inclded sample dictionary:
 
 	$ mkdir -p $HOME/docote-dicts/
