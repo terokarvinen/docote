@@ -30,7 +30,19 @@ In the future, docoto could be included as plugin to a text editor, such as micr
 	$ chmod a+x docote
 	$ ./docote
 
-Docote does not include any dictionaries, so feel free to add your own. 
+Docote does not include any dictionaries, so feel free to add your own. To test it with the inclded sample dictionary:
+
+	$ mkdir -p $HOME/docote-dicts/
+	$ cp examples/sample.json $HOME/docote-dicts/
+	$ ./docote
+	...
+	Found dictionaries:
+	        /home/tero/docote-dicts/sample.json
+	...
+	$ docote sample index
+	### sample index ###
+	Sample Dictionary for DocoteSee you at TeroKarvinen.com
+	...
 
 # Limitations
 
