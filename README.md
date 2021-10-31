@@ -4,7 +4,7 @@ Read API docs offline, CLI, supports DevDocs.io compatible JSON files
 
 # Usage
 
-	$ docote sql select|head
+	$ docote sql select
 	### postgre sql-select ###
 	SELECT SELECT, TABLE, WITH — retrieve rows from a table or view   Synopsis [ WITH [ RECURSIVE ] with_query [, ...] ]
 	SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]
